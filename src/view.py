@@ -1,21 +1,13 @@
 import tkinter as tk
+import tkinter.font as tkFont
 from PIL import Image
 from PIL import ImageTk
 import cv2
-import threading
-import queue
-import tkinter as tk
-from PIL import Image
-from PIL import ImageTk
-import cv2
-import threading
-import queue
-
 import os
 root_path = os.path.abspath(os.getcwd())
 
-
-#
+# =====================
+# Internal functions
 def _process_image(image, nx=200, ny=200):
         #resize image to desired width and height
         #image = image.resize((self.image_width, self.image_height),Image.ANTIALIAS)
@@ -30,9 +22,8 @@ def _process_image(image, nx=200, ny=200):
         return image
     
 
-# Fonts
-# ---------
-import tkinter.font as tkFont
+# =====================
+
 
 class LeftView(tk.Frame):
     ''' tk frame representing left view'''
@@ -65,7 +56,6 @@ class MiddleView(tk.Frame):
         
         
     def setup_ui(self):
-        
         # Title
         self.output_label = tk.Label(self, text="Face detection Output", bg="black", fg="white")
         self.output_label.pack(side="top", fill="both", expand="yes", padx=10)

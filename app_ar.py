@@ -10,15 +10,15 @@
 # - loop is managed with
 
 
-import tkinter as tk
-from PIL import Image, ImageTk
+
 import cv2
-import threading
 import queue
-from src.view import AppGui
 from src.controller_webcam_processing import WebcamThread
-from src.controller import Controller
-from src.model import Faces
+
+# Model - View - Controller
+from src.view import AppGui # view / UI
+from src.controller import Controller # controller
+from src.model import Faces # model
 
 class Wrapper:
     '''
@@ -37,24 +37,21 @@ class Wrapper:
         #create a queue to fetch and execute callbacks passed 
         #from background thread
         self.webcam_attempts = 0  #save attempts made to fetch webcam video in case of failure 
-        self.app_gui.root.protocol("WM_DELETE_WINDOW", self.on_gui_closing)  #register callback for being called when GUI window is closed
+        self.app_gui.root.protocol("WM_DELETE_WINDOW", self._on_gui_closing)  #register callback for being called when GUI window is closed
         self.callback_queue = queue.Queue()
         self.webcam_thread = WebcamThread(self.app_gui, self.callback_queue)  #create a thread to fetch webcam feed video
 
-        self.start_video() #start webcam
-        self.fetch_webcam_video()  #start fetching video
+        self.webcam_thread.start()  #start webcam
+        self._fetch_webcam_video()  #start fetching video
     
-    def on_gui_closing(self):
+    def _on_gui_closing(self):
         self.webcam_attempts = 51
         self.webcam_thread.stop()
         self.webcam_thread.join()
         self.webcam_thread.release_resources()
         self.app_gui.root.destroy()
-
-    def start_video(self):
-        self.webcam_thread.start()
         
-    def fetch_webcam_video(self):
+    def _fetch_webcam_video(self):
             try:
                 #while True:
                 #try to get a callback put by webcam_thread
@@ -64,30 +61,27 @@ class Wrapper:
                 callback()
                 self.webcam_attempts = 0
                 #self.app_gui.root.update_idletasks()
-                self.app_gui.root.after(70, self.fetch_webcam_video)
+                self.app_gui.root.after(70, self._fetch_webcam_video)
                     
             except queue.Empty:
                 if (self.webcam_attempts <= 50):
                     self.webcam_attempts = self.webcam_attempts + 1
-                    self.app_gui.root.after(100, self.fetch_webcam_video)
+                    self.app_gui.root.after(100, self._fetch_webcam_video)
 
     def test_gui(self):
-        #test images update
-        #read the images using OpenCV, later this will be replaced
-        #by live video feed
-        image, gray = self.read_images()
+        '''
+        test images update
+        read the images using OpenCV, later this will be replaced
+        by live video feed
+        '''
+        image = cv2.imread('data/test1.jpg')
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)#conver to RGB space and to gray scale
+        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         self.app_gui.update_webcam_output(image)
         self.app_gui.update_neural_network_output(gray)
         self.app_gui.update_chat_view("4 + 4 = ? ", "number")  #test chat view update
         self.app_gui.update_emotion_state("neutral")  #test emotion state update
         
-    def read_images(self):
-        image = cv2.imread('data/test1.jpg')
-        #conver to RGB space and to gray scale
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        return image, gray
-    
     def launch(self):
         ''''''
         self.app_gui.launch()
